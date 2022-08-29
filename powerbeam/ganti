@@ -1,1 +1,836 @@
-Test
+#!/bin/bash
+#while true
+#do
+FILENAME=ganti
+URLUPDATE="https://raw.githubusercontent.com/s1sw4nto/router/main/powerbeam"
+DIR=/gantiwifi
+WLAN="wlan0"
+PHY="phy0"
+MON="mon0"
+rehat="50"
+#essid1="ER KOST.1"
+essid1="KOST LENIRA"
+essid2="Super Lambat"
+essid3="ZTE_2.4G_pNF9EX"
+essid4="AFIKA"
+#essid5="SD MUSADA"
+#essid5="Kedai Mini"
+essid5="ADHIS"
+essid6="512"
+essid7="HUAWEI-22FD"
+essid8="DECOLGEN"
+#essid9="YOGA"
+essid9="ER KOST.2"
+essid10="MUSADA"
+essid11="Fredy"
+essid12="mncplay"
+
+
+#wifi1=erkost1
+wifi1=Lenira
+wifi2=lambat
+wifi3=zte
+wifi4=AFIKA
+#wifi5=sdmusada
+#wifi5=KedaiMini
+wifi5=ADHIS
+wifi6=512
+wifi7=huawei
+wifi8=decolgen
+#wifi9=yoga
+wifi9=erkost2
+wifi10=MUSADA
+wifi11=Fredy
+wifi12=mncplay
+
+ping="Ping"
+scan="Scan"
+update="Update"
+
+scan(){
+          #iw phy $PHY interface add scan0 type station
+          #ifconfig scan0 up
+          #sleep 2
+          #scan=`iw dev scan0 scan | egrep "signal:|SSID:" | sed -e "s/\tsignal: //" -e "s/\tSSID: //" | awk '{ORS = (NR % 2 == 0)? "\n" : " "; print}' | sort`
+          scan=`iw dev $WLAN scan | egrep "signal:|SSID:|DS Parameter set:" | sed -e "s/\tsignal: //" -e "s/\tSSID: //" -e "s/\tDS Parameter set: channel //" | awk '{ORS = (NR % 3 == 0)? "\n" : " "; print}' | sort`
+          echo "-------------------"
+          echo "$scan"
+          echo "-------------------"
+          network=`iwconfig $WLAN | egrep "ESSID:|Signal level=" | awk '{ORS = (NR % 2 == 0)? "\n" : "\n"; print $3,$4,$5,$6,$7,$8,$9}'`
+          echo "Conneted With ESSID:"
+          echo "$network"
+          echo "-------------------"
+          #iw dev scan0 del
+          exit
+}
+
+pingtest(){
+       ping -c 4  1.1.1.1
+       exit
+}
+start(){
+       echo "ping_loop run_command"
+       killall ping_loop > /dev/null 2>&1 &
+       sleep 2
+       #ping_loop run_command &
+       killall $FILENAME
+       exit
+}
+stop() {
+          ps | grep ping_loop | grep -v grep > /dev/null
+          if [ "$?" == "0" ];then
+                pid=$(ps | grep ping_loop | grep -v grep | awk -F" " '{print $1}')
+                pid2=$(ps | grep ping | grep -v grep | awk -F" " '{print $1}')
+                echo "Kill pid2: $pid2"
+                kill $pid2
+                echo "Kill pid: $pid"
+                kill $pid
+          else
+                echo "Ping not running"
+          fi
+}
+restart(){
+       stop
+       sleep 2
+       start
+       killall $FILENAME
+       exit
+}
+change(){
+       echo "-------------------"
+       echo "Read Command:"
+       echo "-------------------"
+       command=$newwifi
+       echo "$command"
+       echo "-------------------"
+       uci set ping_loop.setting.command="ganti $command"
+       uci commit ping_loop
+       uci get ping_loop.setting.command
+       echo "-------------------"
+       ifdown wwan
+       restart
+       killall $FILENAME
+       exit
+}
+monitor(){
+       cp $DIR/wireless /etc/config
+       cp $DIR/network /etc/config
+       sleep 1
+       wifi reload
+       sleep 1
+       echo "-------------------"
+       echo "Ganti mode monitor: $WLAN"
+       echo "-------------------"
+       killall $FILENAME
+       exit
+}
+mon(){
+       iw phy $PHY interface add $MON type monitor
+       ifconfig $MON down
+       macchanger -r $MON
+       ifconfig $MON up
+}
+cmd(){
+       monitor
+       detik="10"
+       while [ $detik -gt 0 ]; do
+	   sleep 1
+	   : $((detik--))
+       done
+       #ifconfig $WLAN down
+       iw phy $PHY interface add scan0 type station
+       ifconfig scan0 up
+       sleep 2
+       #iwlist scan0 scan
+       #iw dev scan0 del
+       #ifconfig wlan2 up
+       #killall -HUP hostapd
+       SCAN=`iw dev scan0 scan | grep "SSID:" | sed -e "s/\tSSID: //" | awk '{ORS = (NR % 2 == 0)? "\n" : "\n"; print}' | sort > /tmp/ganti.txt`
+       iw dev scan0 del
+}
+wifi1(){
+          #cmd
+          #nama=`grep -n "$essid1" /tmp/ganti.txt | awk -F  ":" '{print $2}'`
+          nama="$essid1"
+          if [ "$nama" = "$essid1" ]; then
+                stop
+                sleep 2
+                cd $DIR
+                cd $wifi1
+                cp network /etc/config
+                cp wireless /etc/config
+                sleep 1
+                ifup wwan
+                echo "-------------------"
+                echo "Join: $nama"
+                echo "-------------------"
+		detik="$rehat"
+		while [ $detik -gt 0 ]; do
+			sleep 1
+			: $((detik--))
+		done
+                ping -c 4 -s 2 1.1.1.1
+                if [ "$?" != "0" ];then
+		      echo "-------------------"
+		              stop
+		              sleep 2
+                      echo "Ping failed"
+                      echo "Pindah: $wifi2"
+                      wifi2
+                else
+                      restart
+	        fi
+           else
+                echo "-------------------"
+                echo "$essid1 not avaliable"
+                echo "Pindah: $wifi2"
+                wifi2
+           fi
+}
+wifi2(){
+          #cmd
+          #nama=`grep -n "$essid2" /tmp/ganti.txt | awk -F  ":" '{print $2}'`
+          nama="$essid2"
+          if [ "$nama" = "$essid2" ]; then
+                stop
+                sleep 2
+                cd $DIR
+                cd $wifi2
+                cp network /etc/config
+                cp wireless /etc/config
+                sleep 1
+                ifup wwan
+                echo "-------------------"
+                echo "Join: $nama"
+                echo "-------------------"
+                detik="$rehat"
+		while [ $detik -gt 0 ]; do
+			sleep 1
+			: $((detik--))
+		done
+                ping -c 4 -s 2 1.1.1.1
+                if [ "$?" != "0" ];then
+		      echo "-------------------"
+		              stop
+		              sleep 2
+                      echo "Ping failed"
+                      echo "Pindah: $wifi3"
+                      wifi3
+                else
+                      restart
+	        fi
+           else
+                echo "-------------------"
+                echo "$essid2 not avaliable"
+                echo "Pindah: $wifi3"
+                wifi3
+           fi
+}
+wifi3(){
+          nama="$essid3"
+          if [ "$nama" = "$essid3" ]; then
+                stop
+                sleep 2
+                cd $DIR
+                cd $wifi3
+                cp network /etc/config
+                cp wireless /etc/config
+                sleep 1
+                ifup wwan
+                echo "-------------------"
+                echo "Join: $nama"
+                echo "-------------------"
+                detik="$rehat"
+		while [ $detik -gt 0 ]; do
+			sleep 1
+			: $((detik--))
+		done
+                ping -c 4 -s 2 1.1.1.1
+                if [ "$?" != "0" ];then
+		      echo "-------------------"
+		              stop
+		              sleep 2
+                      echo "Ping failed"
+                      echo "Pindah: $wifi4"
+                      wifi4
+                else
+                      restart
+	        fi
+           else
+                echo "-------------------"
+                echo "$essid3 not avaliable"
+                echo "Pindah: $wifi4"
+                wifi4
+           fi
+}
+wifi4(){
+          nama="$essid4"
+          if [ "$nama" = "$essid4" ]; then
+                stop
+                sleep 2
+                cd $DIR
+                cd $wifi4
+                cp network /etc/config
+                cp wireless /etc/config
+                sleep 1
+                ifup wwan
+                echo "-------------------"
+                echo "Join: $nama"
+                echo "-------------------"
+                detik="$rehat"
+		while [ $detik -gt 0 ]; do
+			sleep 1
+			: $((detik--))
+		done
+                ping -c 4 -s 2 1.1.1.1
+                if [ "$?" != "0" ];then
+		      echo "-------------------"
+		              stop
+		              sleep 2
+                      echo "Ping failed"
+                      echo "Pindah: $wifi5"
+                      wifi5
+                else
+                      restart
+	        fi
+           else
+                echo "-------------------"
+                echo "$essid3 not avaliable"
+                echo "Pindah: $wifi5"
+                wifi5
+           fi
+}
+wifi5(){
+          nama="$essid5"
+          if [ "$nama" = "$essid5" ]; then
+                stop
+                sleep 2
+                cd $DIR
+                cd $wifi5
+                cp network /etc/config
+                cp wireless /etc/config
+                sleep 1
+                ifup wwan
+                echo "-------------------"
+                echo "Join: $nama"
+                echo "-------------------"
+                detik="$rehat"
+		while [ $detik -gt 0 ]; do
+			sleep 1
+			: $((detik--))
+		done
+                ping -c 4 -s 2 1.1.1.1
+                if [ "$?" != "0" ];then
+		      echo "-------------------"
+		              stop
+		              sleep 2
+                      echo "Ping failed"
+                      echo "Pindah: $wifi6"
+                      wifi6
+                else
+                      restart
+	        fi
+           else
+                echo "-------------------"
+                echo "$essid3 not avaliable"
+                echo "Pindah: $wifi6"
+                wifi6
+           fi
+}
+wifi6(){
+          nama="$essid6"
+          if [ "$nama" = "$essid6" ]; then
+                stop
+                sleep 2
+                cd $DIR
+                cd $wifi6
+                cp network /etc/config
+                cp wireless /etc/config
+                sleep 1
+                ifup wwan
+                echo "-------------------"
+                echo "Join: $nama"
+                echo "-------------------"
+                detik="$rehat"
+		while [ $detik -gt 0 ]; do
+			sleep 1
+			: $((detik--))
+		done
+                ping -c 4 -s 2 1.1.1.1
+                if [ "$?" != "0" ];then
+		      echo "-------------------"
+		              stop
+		              sleep 2
+                      echo "Ping failed"
+                      echo "Pindah: $wifi7"
+                      wifi7
+                else
+                      restart
+	        fi
+           else
+                echo "-------------------"
+                echo "$essid3 not avaliable"
+                echo "Pindah: $wifi7"
+                wifi7
+           fi
+}
+wifi7(){
+          nama="$essid7"
+          if [ "$nama" = "$essid7" ]; then
+                stop
+                sleep 2
+                cd $DIR
+                cd $wifi7
+                cp network /etc/config
+                cp wireless /etc/config
+                sleep 1
+                ifup wwan
+                echo "-------------------"
+                echo "Join: $nama"
+                echo "-------------------"
+                detik="$rehat"
+		while [ $detik -gt 0 ]; do
+			sleep 1
+			: $((detik--))
+		done
+                ping -c 4 -s 2 1.1.1.1
+                if [ "$?" != "0" ];then
+		      echo "-------------------"
+		              stop
+		              sleep 2
+                      echo "Ping failed"
+                      echo "Pindah: $wifi8"
+                      wifi8
+                else
+                      restart
+	        fi
+           else
+                echo "-------------------"
+                echo "$essid7 not avaliable"
+                echo "Pindah: $wifi8"
+                wifi8
+           fi
+}
+wifi8(){
+          nama="$essid8"
+          if [ "$nama" = "$essid8" ]; then
+                stop
+                sleep 2
+                cd $DIR
+                cd $wifi8
+                cp network /etc/config
+                cp wireless /etc/config
+                sleep 1
+                ifup wwan
+                echo "-------------------"
+                echo "Join: $nama"
+                echo "-------------------"
+                detik="$rehat"
+		while [ $detik -gt 0 ]; do
+			sleep 1
+			: $((detik--))
+		done
+                ping -c 4 -s 2 1.1.1.1
+                if [ "$?" != "0" ];then
+		      echo "-------------------"
+		              stop
+		              sleep 2
+                      echo "Ping failed"
+                      echo "Pindah: $wifi1"
+                      wifi1
+                else
+                      restart
+	        fi
+           else
+                echo "-------------------"
+                echo "$essid8 not avaliable"
+                echo "Pindah: $wifi1"
+                wifi1
+           fi
+}
+wifi9(){
+          nama="$essid9"
+          if [ "$nama" = "$essid9" ]; then
+                stop
+                sleep 2
+                cd $DIR
+                cd $wifi9
+                cp network /etc/config
+                cp wireless /etc/config
+                sleep 1
+                ifup wwan
+                echo "-------------------"
+                echo "Join: $nama"
+                echo "-------------------"
+                detik="$rehat"
+		while [ $detik -gt 0 ]; do
+			sleep 1
+			: $((detik--))
+		done
+                ping -c 4 -s 2 1.1.1.1
+                if [ "$?" != "0" ];then
+		      echo "-------------------"
+		              stop
+		              sleep 2
+                      echo "Ping failed"
+                      echo "Pindah: $wifi10"
+                      wifi10
+                else
+                      restart
+	        fi
+           else
+                echo "-------------------"
+                echo "$essid8 not avaliable"
+                echo "Pindah: $wifi10"
+                wifi10
+           fi
+}
+wifi10(){
+          nama="$essid10"
+          if [ "$nama" = "$essid10" ]; then
+                stop
+                sleep 2
+                cd $DIR
+                cd $wifi10
+                cp network /etc/config
+                cp wireless /etc/config
+                sleep 1
+                ifup wwan
+                echo "-------------------"
+                echo "Join: $nama"
+                echo "-------------------"
+                detik="$rehat"
+		while [ $detik -gt 0 ]; do
+			sleep 1
+			: $((detik--))
+		done
+                ping -c 4 -s 2 1.1.1.1
+                if [ "$?" != "0" ];then
+		      echo "-------------------"
+		              stop
+		              sleep 2
+                      echo "Ping failed"
+                      echo "Pindah: $wifi11"
+                      wifi11
+                else
+                      restart
+	        fi
+           else
+                echo "-------------------"
+                echo "$essid8 not avaliable"
+                echo "Pindah: $wifi11"
+                wifi11
+           fi
+}
+wifi11(){
+          nama="$essid11"
+          if [ "$nama" = "$essid11" ]; then
+                stop
+                sleep 2
+                cd $DIR
+                cd $wifi11
+                cp network /etc/config
+                cp wireless /etc/config
+                sleep 1
+                ifup wwan
+                echo "-------------------"
+                echo "Join: $nama"
+                echo "-------------------"
+                detik="$rehat"
+		while [ $detik -gt 0 ]; do
+			sleep 1
+			: $((detik--))
+		done
+                ping -c 4 -s 2 1.1.1.1
+                if [ "$?" != "0" ];then
+		      echo "-------------------"
+		              stop
+		              sleep 2
+                      echo "Ping failed"
+                      echo "Pindah: $wifi1"
+                      wifi1
+                else
+                      restart
+	        fi
+           else
+                echo "-------------------"
+                echo "$essid8 not avaliable"
+                echo "Pindah: $wifi1"
+                wifi1
+           fi
+}
+wifi12(){
+          nama="$essid12"
+          if [ "$nama" = "$essid12" ]; then
+                stop
+                sleep 2
+                cd $DIR
+                cd $wifi12
+                cp network /etc/config
+                cp wireless /etc/config
+                sleep 1
+                ifup wwan
+                echo "-------------------"
+                echo "Join: $nama"
+                echo "-------------------"
+                detik="$rehat"
+		while [ $detik -gt 0 ]; do
+			sleep 1
+			: $((detik--))
+		done
+                ping -c 4 -s 2 1.1.1.1
+                if [ "$?" != "0" ];then
+		      echo "-------------------"
+		              stop
+		              sleep 2
+                      echo "Ping failed"
+                      echo "Pindah: $wifi1"
+                      wifi1
+                else
+                      restart
+	        fi
+           else
+                echo "-------------------"
+                echo "$essid8 not avaliable"
+                echo "Pindah: $wifi1"
+                wifi1
+           fi
+}
+update(){
+   clear
+   ping -c 4 -s 560 1.1.1.1
+   if [ "$?" != "0" ];then
+		  echo "-------------------"
+          echo "Ping failed"
+          echo "Cannot Update"
+          echo "-------------------"
+   else
+          wget $URLUPDATE/$FILENAME -O /usr/bin/$FILENAME
+          ssid=Fredy
+          wget $URLUPDATE$DIR/$ssid/network -O $DIR/$ssid/network
+          wget $URLUPDATE$DIR/$ssid/wireless -O $DIR/$ssid/wireless
+          cd $DIR
+          ls
+          cd $DIR/$ssid
+          ls
+          echo "-------------------"
+          echo "Update selesai"
+          echo "-------------------"
+          echo "Ketik: $FILENAME"
+          echo "-------------------"
+          exit
+    fi
+}
+pilih(){
+       echo "-------------------"
+       network=`iwconfig $WLAN | egrep "ESSID:|Signal level=" | awk '{ORS = (NR % 2 == 0)? "\n" : "\n"; print $3,$4,$5,$6,$7,$8,$9}'`
+       echo "Conneted With ESSID:"
+       echo "$network"
+       echo "-------------------"
+       PS3='Choose: '
+foods=("$ping" "$scan" "$update" "$wifi1" "$wifi2" "$wifi3" "$wifi4" "$wifi5" "$wifi6" "$wifi7" "$wifi8" "$wifi9" "$wifi10" "$wifi11" "$wifi12")
+       select fav in "${foods[@]}"; do
+       case $fav in
+       "$ping")
+          pingtest
+        ;;
+       "$scan")
+           scan
+        ;;
+        "$update")
+           update
+        ;;
+       "$wifi1")
+          wifi1
+        ;;
+        "$wifi2")
+          wifi2
+        ;;
+        "$wifi3")
+          wifi3
+        ;;
+        "$wifi4")
+          wifi4
+        ;;
+        "$wifi5")
+          wifi5
+        ;;
+        "$wifi6")
+          wifi6
+        ;;
+        "$wifi7")
+          wifi7
+        ;;
+        "$wifi8")
+          wifi8
+        ;;
+        "$wifi9")
+          wifi9
+        ;;
+        "$wifi10")
+          wifi10
+        ;;
+        "$wifi11")
+          wifi11
+        ;;
+         "$wifi12")
+          wifi12
+        ;;
+         *) echo "invalid option $REPLY"
+        ;;
+       esac
+       done
+}
+
+case $1 in
+"$wifi1")
+          wifi1
+;;
+"$wifi2")
+          wifi2
+;;
+"$wifi3")
+          wifi3
+;;
+"$wifi4")
+          wifi4
+;;
+"$wifi5")
+          wifi5
+;;
+"$wifi6")
+          wifi6
+;;
+"$wifi7")
+          wifi7
+;;
+"$wifi8")
+          wifi8
+;;
+"$wifi9")
+          wifi9
+;;
+"$wifi10")
+          wifi10
+;;
+"$wifi11")
+          wifi11
+;;
+"$wifi12")
+          wifi12
+;;
+"scan")
+       scan
+;;
+"monitor")
+       monitor
+;;
+"mon")
+       mon
+;;
+"start")
+       start
+;;
+"stop")
+       stop
+;;
+"restart")
+       restart
+;;
+"pilih")
+        pilih
+;;
+"change")
+       echo "-------------------"
+       network=`iwconfig $WLAN | egrep "ESSID:|Signal level=" | awk '{ORS = (NR % 2 == 0)? "\n" : "\n"; print $3,$4,$5,$6,$7,$8,$9}'`
+       echo "Conneted With ESSID:"
+       echo "$network"
+       echo "-------------------"
+       cmd=`find /etc/init.d -type f -name ping_* | awk '{print}'`
+       echo "$cmd"
+       echo "-------------------"
+       uci get ping_loop.setting.command
+       echo "-------------------"
+       PS3='Choose: '
+foods=("$ping" "$scan" "$wifi1" "$wifi2" "$wifi3" "$wifi4" "$wifi5" "$wifi6" "$wifi7" "$wifi8" "$wifi9" "$wifi10" "$wifi11" "$wifi12")
+       select fav in "${foods[@]}"; do
+       case $fav in
+       "$ping")
+           pingtest
+        ;;
+        "$scan")
+           scan
+        ;;
+        "$wifi1")
+           newwifi=$wifi1
+           change
+        ;;
+        "$wifi2")
+           newwifi=$wifi2
+           change
+        ;;
+        "$wifi3")
+           newwifi=$wifi3
+           change
+        ;;
+        "$wifi4")
+           newwifi=$wifi4
+           change
+        ;;
+        "$wifi5")
+           newwifi=$wifi5
+           change
+        ;;
+        "$wifi6")
+           newwifi=$wifi6
+           change
+        ;;
+        "$wifi7")
+           newwifi=$wifi7
+           change
+        ;;
+        "$wifi8")
+           newwifi=$wifi8
+           change
+        ;;
+        "$wifi9")
+           newwifi=$wifi9
+           change
+        ;;
+        "$wifi10")
+           newwifi=$wifi10
+           change
+        ;;
+        "$wifi11")
+           newwifi=$wifi11
+           change
+        ;;
+        "$wifi12")
+           newwifi=$wifi12
+           change
+         ;;
+        *) echo "invalid option $REPLY"
+        ;;
+       esac
+       done
+;;
+"ping")
+       pingtest
+;;
+*)
+   echo "-------------------"
+   echo "Command tersedia: ganti xxxx"
+   echo "-------------------"
+   echo "scan"
+   echo "change"
+   echo "pilih"
+   echo "ping"
+   echo "start"
+   echo "stop"
+   echo "restart"
+   echo " "
+   sleep 3
+   pilih
+;;
+esac
+#done
